@@ -45,6 +45,7 @@ char ctlt_rcsid[] =
 /* #include <netinet/ip.h> looks like this is not needed (no functions used) */
 #include <string.h>
 #include <errno.h>
+#include <netdb.h>
 #include "talk.h"
 
 #define CTL_WAIT 2	/* time to wait for a response, in seconds */
@@ -69,15 +70,16 @@ open_ctl(void)
 	if (to_local_talkd < 0 || to_remote_talkd < 0) {
 		p_error("Bad socket");
 	}
-
-#ifdef SO_BSDCOMPAT
+/* agi: SO_BSDCOMPAT is defined, but obsolete in current kernels
+#ifdef SO_BSDCOMPAT */
 	/* 
 	 * Linux does some async error return stuff that
 	 * really disagrees with us. So we disable it.
 	 */
-	setsockopt(to_local_talkd, SOL_SOCKET, SO_BSDCOMPAT, &on, sizeof(on));
+/*	setsockopt(to_local_talkd, SOL_SOCKET, SO_BSDCOMPAT, &on, sizeof(on));
 	setsockopt(to_remote_talkd, SOL_SOCKET, SO_BSDCOMPAT, &on, sizeof(on));
 #endif
+*/
 
 	/*
 	 * Explicitly talk to the local daemon over loopback.
@@ -120,20 +122,45 @@ open_ctl(void)
 		p_error("getsockname");
 	}
 	local_addr_for_remote = rem.sin_addr.s_addr;
+
+#ifdef SUN_HACK
+	personality = P_NORMAL;
+#endif
 }
 
 static void
 send_packet(CTL_MSG *msg, int sock)
 {
 	int cc;
+#ifdef SUN_HACK
+	CTL_MSG_S msg_S;
+	const void *packet;
+	size_t len;
+
+	if (personality == P_SUNOS) {
+		msg2msg_S(msg, &msg_S);
+		packet = &msg_S;
+		len = sizeof(msg_S);
+	} else {
+		packet = msg;
+		len = sizeof(*msg);
+	}
+
+	cc = send(sock, packet, len, 0);
+#else
 	cc = send(sock, msg, sizeof(*msg), 0);
+#endif
 	if (cc<0 && errno == EINTR) {
 		return;
 	}
 	else if (cc<0) {
 	    p_error("Error on write to talk daemon");
 	}
+#ifdef SUN_HACK
+	else if (((size_t) cc) != len) {
+#else
 	else if (cc != sizeof(*msg)) {
+#endif
 	    p_error("Short write to talk daemon");
 	}
 }
@@ -170,6 +197,36 @@ send_one_delete(int ismydaemon, int id)
 	send_packet(&tmp, sock);
 }
 
+#ifdef SUN_HACK
+static void
+reconnect(void)
+{
+	struct sockaddr_in loc, rem;
+
+	daemon_port = getservbyname("talk", "udp")->s_port;
+
+	memset(&loc, 0, sizeof(loc));
+	loc.sin_family = AF_INET;
+	loc.sin_port = daemon_port;
+	loc.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+
+	if (connect(to_local_talkd, (struct sockaddr *)&loc, sizeof(loc))<0) {
+		p_error("Couldn't connect local control socket");
+	}
+
+	memset(&rem, 0, sizeof(rem));
+	rem.sin_family = AF_INET;
+	rem.sin_port = daemon_port;
+	rem.sin_addr = his_machine_addr;
+
+	if (connect(to_remote_talkd, (struct sockaddr *)&rem, sizeof(rem))<0) {
+		p_error("Couldn't connect remote control socket");
+	}
+
+	personality = P_SUNOS;
+}
+#endif
+
 /*
  * SOCKDGRAM is unreliable, so we must repeat messages if we have
  * not received an acknowledgement within a reasonable amount
@@ -192,6 +249,9 @@ do_transact(int sock, CTL_MSG *mesg, CTL_RESPONSE *rp)
 	do {
 		/* resend message until a response is obtained */
 		do {
+#ifdef SUN_HACK
+again:
+#endif
 			send_packet(mesg, sock);
 			read_mask = ctl_mask;
 			wait.tv_sec = CTL_WAIT;
@@ -209,12 +269,35 @@ do_transact(int sock, CTL_MSG *mesg, CTL_RESPONSE *rp)
 		 * request/acknowledgements being sent)
 		 */
 		do {
-			cc = recv(sock, (char *)rp, sizeof (*rp), 0);
+#ifdef SUN_HACK
+			CTL_RESPONSE_S rp_S;
+
+                        if (personality==P_NORMAL)
+#endif
+				cc = recv(sock, (char *)rp,
+					  sizeof (*rp), 0);
+#ifdef SUN_HACK
+                        else
+ 				cc = recv(sock, (char *)&rp_S,
+ 					  sizeof (rp_S), 0);
+#endif
 			if (cc < 0) {
 				if (errno == EINTR)
 					continue;
+#ifdef SUN_HACK
+				if (errno == ECONNREFUSED &&
+				    personality == P_NORMAL &&
+				    sock == to_remote_talkd) {
+					reconnect();
+					goto again;
+				}
+#endif
 				p_error("Error on read from talk daemon");
 			}
+#ifdef SUN_HACK
+			if (personality==P_SUNOS)
+				resp_S2resp(&rp_S, rp);
+#endif
 			read_mask = ctl_mask;
 			/* an immediate poll */
 			timerclear(&wait);

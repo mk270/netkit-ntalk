@@ -46,13 +46,13 @@ char table_rcsid[] =
  * Consider this a mis-guided attempt at modularity
  */
 #include <sys/param.h>
-#include <sys/time.h>
 #include <sys/socket.h>
 #include <syslog.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <netinet/in.h>
 
 #include "prot_talkd.h"

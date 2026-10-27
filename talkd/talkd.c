@@ -63,11 +63,13 @@ char talkd_rcsid[] =
 #include <string.h>
 #include <netdb.h>
 #include <paths.h>
+#include <tcpd.h>
 #include "prot_talkd.h"
 #include "proto.h"
 
 #define TIMEOUT 30
 #define MAXIDLE 120
+#define MINUDPSRCPORT 1024
 
 #if !defined(MAXHOSTNAMELEN)
 #define	MAXHOSTNAMELEN	64
@@ -75,6 +77,10 @@ char talkd_rcsid[] =
 char ourhostname[MAXHOSTNAMELEN];
 
 static time_t lastmsgtime;
+#ifndef __USE_GNU
+static char *program_invocation_short_name;
+#endif
+static int quiet;
 
 static void
 timeout(int ignore)
@@ -163,11 +169,16 @@ do_one_packet(void)
 	char theirhost[MAXHOSTNAMELEN];
 	const char *theirip;
 
-	struct hostent *hp;
 	struct sockaddr_in sn;
-	int cc, i, ok;
+	struct sockaddr_in server_sin;
+	int cc;
 	socklen_t addrlen;
+ 	int theirport;
 
+	struct request_info request;
+
+	signal(SIGALRM, timeout);
+	alarm(TIMEOUT);
 	addrlen = sizeof(sn);
 	cc = recvfrom(0, inbuf, sizeof(inbuf), 0,
 		      (struct sockaddr *)&sn, &addrlen);
@@ -194,6 +205,12 @@ do_one_packet(void)
 		return;
 	}
 
+ 	theirport = ntohs(sn.sin_port);
+ 	if (theirport < MINUDPSRCPORT) {
+		syslog(LOG_WARNING, "%d: bad port", theirport);
+		return;
+	}
+
 	/* 
 	 * If we get here we have an address we can reply to, although
 	 * it may not be good for much. If possible, reply to it, because
@@ -203,37 +220,31 @@ do_one_packet(void)
 	theirip = inet_ntoa(sn.sin_addr);
 	mp = (CTL_MSG *)inbuf;
 
-	/*
-	 * Check they're not being weenies.
-	 * We should look into using libwrap here so hosts.deny works.
-	 * Wrapping talkd with tcpd isn't very useful.
-	 */
-	hp = gethostbyaddr((char *)&sn.sin_addr, sizeof(struct in_addr), 
-			   AF_INET);
-	if (hp == NULL) {
-		syslog(LOG_WARNING, "%s: bad dns", theirip);
+	addrlen = sizeof(server_sin);
+	if (getsockname(0, (struct sockaddr *)&server_sin, &addrlen)<0) {
+		syslog(LOG_WARNING, "getsockname: %s", strerror(errno));
+		return;
+	}
+	request_init(&request,
+		     RQ_FILE, 0,
+		     RQ_DAEMON, program_invocation_short_name,
+		     RQ_CLIENT_SIN, &sn,
+		     RQ_SERVER_SIN, &server_sin,
+		     0);
+	sock_methods(&request);
+	if (!hosts_access(&request)) {
+		refuse(&request);
 		send_reject_packet(mp, &sn, MACHINE_UNKNOWN, 0);
 		return;
 	}
-	strncpy(theirhost, hp->h_name, sizeof(theirhost));
+	if (!quiet) {
+		syslog(LOG_INFO, "connect from %s", eval_client(&request));
+	}
+
+	signal(SIGALRM, timeout);
+	alarm(TIMEOUT);
+	strncpy(theirhost, eval_hostinfo(request.client), sizeof(theirhost));
 	theirhost[sizeof(theirhost)-1] = 0;
-
-	hp = gethostbyname(theirhost);
-	if (hp == NULL) {
-		syslog(LOG_WARNING, "%s: bad dns", theirip);
-		send_reject_packet(mp, &sn, MACHINE_UNKNOWN, 0);
-		return;
-	}
-
-	for (i=ok=0; hp->h_addr_list[i] && !ok; i++) {
-		if (!memcmp(hp->h_addr_list[i], &sn.sin_addr, 
-			    sizeof(sn.sin_addr))) ok = 1;
-	}
-	if (!ok) {
-		syslog(LOG_WARNING, "%s: bad dns", theirip);
-		send_reject_packet(mp, &sn, MACHINE_UNKNOWN, 0);
-		return;
-	}
 
 	/*
 	 * Try to straighten out bad packets.
@@ -319,11 +330,16 @@ main(int argc, char *argv[])
 	socklen_t sz = sizeof(sn);
 	int do_debug=0, do_badpackets=0, ch;
 
+#ifndef __USE_GNU
+	program_invocation_short_name = argv[0];
+	if (argv[0][0] == '/') {
+		program_invocation_short_name = strrchr(argv[0], '/') + 1;
+	}
+#endif
 	/* make sure we're a daemon */
 	if (getsockname(0, (struct sockaddr *)&sn, &sz)) {
-		const char *msg = strerror(errno);
-		write(2, msg, strlen(msg));
-		exit(1);
+		printf ("must be run from inetd.\n");
+		exit (1);
 	}
 	openlog("talkd", LOG_PID, LOG_DAEMON);
 	if (gethostname(ourhostname, sizeof(ourhostname) - 1) < 0) {
@@ -334,16 +350,15 @@ main(int argc, char *argv[])
 		syslog(LOG_ERR, "chdir: %s: %s", _PATH_DEV, strerror(errno));
 		exit(1);
 	}
-	while ((ch = getopt(argc, argv, "dp"))!=-1) {
+	while ((ch = getopt(argc, argv, "dpq"))!=-1) {
 		switch (ch) {
 		    case 'd': do_debug=1; break;
 		    case 'p': do_badpackets=1; break;
+		    case 'q': quiet=1; break;
 		}
 	}
 	set_debug(do_debug, do_badpackets);
 
-	signal(SIGALRM, timeout);
-	alarm(TIMEOUT);
 	for (;;) {
 		do_one_packet();
 	}

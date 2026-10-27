@@ -49,6 +49,7 @@ char ann_rcsid[] =
 #include <fcntl.h>
 #include <string.h>
 #include <paths.h>
+#include <time.h>
 #include "prot_talkd.h"
 #include "proto.h"
 

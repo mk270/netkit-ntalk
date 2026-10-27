@@ -40,11 +40,55 @@
 
 #include "prot_talkd.h"
 
+#ifdef SUN_HACK
+/*
+ * Personalities: NORMAL --> Normal behaviour; (almost) everybody.
+ *		  SUNOS  --> The rest: SunOS/Solaris.
+ */
+#define P_NORMAL 1
+#define P_SUNOS  2
+
+/*
+ * Client(SunOS)->server request message format.
+ */
+
+typedef struct {
+        u_char  type;           /* request type */
+#define NAME_SIZE_S       9
+        char    l_name[NAME_SIZE_S];/* caller's name */
+        char    r_name[NAME_SIZE_S];/* callee's name */
+        u_char  pad;
+        u_int32_t id_num;       /* message id */
+        int32_t pid;            /* caller's process id */
+        char    r_tty[TTY_SIZE];/* callee's tty name */
+        struct  osockaddr addr;         /* old (4.3) style */
+        struct  osockaddr ctl_addr;     /* old (4.3) style */
+} CTL_MSG_S;
+
+/*
+ * Server(SunOS)->client response message format.
+ */
+typedef struct {
+        u_char  type;           /* type of request message, see below */
+        u_char  answer;         /* response to request message, see below */
+        u_short  pad;
+        u_long id_num;       /* message id */
+        struct  osockaddr addr; /* address for establishing conversation */
+} CTL_RESPONSE_S;
+#endif
+
+
+
 extern int sockt;
 extern int invitation_waiting;
 
 extern const char *current_state;
 extern int current_line;
+
+#ifdef SUN_HACK
+extern char personality;
+#endif
+
 
 void p_error(const char *string);
 void quit(int);
@@ -63,6 +107,10 @@ void set_edit_chars(void);
 void talk(void);
 void send_delete(void);
 void display(int hiswin, unsigned char *, int);
+#ifdef SUN_HACK
+void msg2msg_S(const CTL_MSG *, CTL_MSG_S *);
+void resp_S2resp(const CTL_RESPONSE_S *, CTL_RESPONSE *);
+#endif
 
 void set_my_edit_chars(int ctrlh, int ctrlu, int ctrlw);
 void set_his_edit_chars(int ctrlh, int ctrlu, int ctrlw);

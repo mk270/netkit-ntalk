@@ -139,7 +139,10 @@ released with
 .Bx 4.2
 uses a different and even more braindead protocol that is completely
 incompatible. Some vendor Unixes (particularly those from Sun) have
-been found to use this old protocol.
+been found to use this old protocol. There's a patch from Juan-Mariano de
+Goyeneche (jmseyas@dit.upm.es) which makes talk/talkd, if compiled with
+-DSUN_HACK, compatible with SunOS/Solaris' ones. It converts messages from
+one protocol to the other.
 .Pp
 Old versions of
 .Nm talk

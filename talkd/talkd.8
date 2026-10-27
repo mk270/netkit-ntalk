@@ -39,8 +39,8 @@
 .Nm talkd
 .Nd remote user communication server
 .Sh SYNOPSIS
-.Nm talkd
-.Op Fl dp
+.Nm /usr/sbin/in.talkd
+.Op Fl dpq
 .Sh DESCRIPTION
 .Nm Talkd
 is the server that notifies a user that someone else wants to
@@ -76,6 +76,9 @@ Debug mode; writes copious logging and debugging information to
 Packet logging mode; writes copies of malformed packets to
 .Pa /var/log/talkd.packets .
 This is useful for debugging interoperability problems.
+.Pp
+.Op Fl q
+Don't log successful connects.
 .Sh SEE ALSO
 .Xr talk 1 ,
 .Xr write 1
