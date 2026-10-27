@@ -2,7 +2,7 @@
 include_directories(BEFORE "../include/")
 
 add_executable(
-    talk
+    netkit-ntalk
     ctl.c
     ctl_transact.c
     display.c
@@ -16,15 +16,16 @@ add_executable(
     talk.c
 )
 target_link_libraries(
-    talk
+    netkit-ntalk
     ncurses
 )
 install(
-    TARGETS talk
+    TARGETS netkit-ntalk
     DESTINATION ${BIN_DIR}
 )
 
 install(
     FILES talk.1
     DESTINATION ${MAN_DIR}/man1/
+    RENAME netkit-ntalk.1
 )
