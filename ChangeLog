@@ -1,0 +1,154 @@
+29-Jul-2000:
+	Have talk scroll by screenfuls instead of single lines.
+	Flip the escape-p/n and ctrl-p/n keys, so the other person's
+	  window scrolls using ctrl. The rationale is that one scrolls
+	  one's own screen much less often and ctrl-combinations are 
+	  easier to type (and can be held down for repeat) - many
+	  keyboards do not have a shifting key that sends an escape
+	  prefix.
+
+22-Jul-2000:
+	Fix minor nonexploitable overflow. (Found by "teso".)
+	Fix input handling to not do silly things with 8-bit text input.
+	  (noted by several people)
+	Hopefully fix a problem where talk spews trash on tty hangup.
+	Also fix things so that talk doesn't exit until you say so - if
+	  the connection breaks, it won't let you type any more, but you
+	  can still scroll and read everything the other guy wrote.
+	
+21-May-2000:
+	Fix bug in otalk emulation. (Herbert Xu, herbert@gondor.apana.org.au)
+
+21-Dec-1999:
+	Make talk handle window resize better.
+
+14-Dec-1999:
+	netkit-ntalk-0.16 is released.
+
+24-Nov-1999:
+	Total rewrite of curses handling in talk to add support for
+	  scrollback. (David A. Holland, dholland@hcs.harvard.edu)
+
+14-Sep-1999:
+	Always ask curses to map input CRs to LFs.
+	  (Olaf Kirch, okir@caldera.de)
+
+1-Aug-1999:
+	Complete y2k and y2038 audit.
+
+31-Jul-1999:
+	Redid makefiles/config stuff for new confgen version.
+
+19-Jun-1999:
+	Fix small glitch in talkd man page.
+	Preliminary version of code in repairs.c to handle otalk 
+	  packets (at least of the kind ytalk emits). It seems 
+	  current ytalk versions will hork without this.
+
+7-Apr-1999:
+	netkit-ntalk-0.11 released.
+	
+9-Dec-1998:
+	We don't need to check for BSD signal semantics now; updated
+	  MCONFIG and regenerated configure script.
+
+26-Nov-1998:
+	Fixed bug: the talkd announce message is passed as the format 
+	  string to fprintf, so if it has %'s in it, we probably crash.
+	Copied <protocols/talkd.h> into include directory, because we
+	  need to fiddle with it.
+	Rearrange/clean up talkd source. Removed mytalkd.h.
+	Added lots of checking and paranoia to packet handling. 
+	Don't reply to the ctl_addr in the packet; reply to where the
+	  packet came from.
+	Created framework for working with bogus packets.
+	Beefed up talkd's debug logging.
+	Cleanup in talk. Removed talk_ctl.h.
+	Fixed the problem where talk goes and blindly binds things to
+	  the wrong local addresses.
+	We don't need talk.FvK.patch any more, either.
+	Filter high-ascii control characters in talk as well as regular
+	  ones. (Olaf Kirch, okir@caldera.de)
+	Don't zoom off the end of the string fields of the input packet in
+	  talkd. (Olaf Kirch, okir@caldera.de)
+
+22-Sep-1997:
+	Fix talkd to use WIFEXITED et al. rather than assume things about
+	the bits returned by wait.
+
+12-Jun-1997:
+	netkit-ntalk-0.10 released.
+
+08-Jun-1997:
+	Pause before clearing the screen on exit. (Peter Tobias, 
+	  tobias@et-inf.fho-emden.de)
+
+19-May-1997:
+	glibc fixes from Red Hat.
+
+05-Apr-1997:
+	Added configure script to generate MCONFIG.
+	Fix problem in talkd that issued PERMISSION_DENIED instead of
+	  NOT_HERE. (Joerg Kleuver, kleuver@shadowgate.rhein.de, via 
+	  Debian)
+	Talk accepts ^H and ^? as erase characters regardless of stty
+	  settings.
+	Better utmp handling in talkd.
+
+08-Mar-1997: 
+	Split from full NetKit package. 
+	Generated this change log from NetKit's.
+
+29-Dec-1996
+	NetKit-0.09 released.
+	Assorted alpha/glibc patches. (Erik Troan, ewt@redhat.com)
+	Assorted bug fixes from Debian. (Peter Tobias, 
+	  tobias@et-inf.fho-emden.de)
+	Hardened programs against DNS h_length spoofing attacks.
+	Use inet_aton() everywhere instead of inet_addr().
+	8-bit fixes to talk. (Christer Weinigel, wingel@dumburk.signum.se)
+	Assorted fixes to talk. (Florian La Roche)
+	Talk handles ^Z correctly now.
+
+22-Aug-1996
+	NetKit-B-0.08 released.
+	(almost) everything now compiles with lots of warnings turned on.
+	talk now beeps correctly with ncurses (fix from Marek Rouchal
+	  <marek@btfmd1.fs.uni-bayreuth.de>.)
+
+25-Jul-1996
+	NetKit-B-0.07A released.
+
+23-Jul-1996
+	NetKit-B-0.07 released.
+	Integrated a collection of patches that had been lurking on the net,
+	  including the 256-ptys support for telnetd and passive mode ftp.
+	Major security fixes, including to fingerd, lpr, rlogin, rsh, talkd, 
+	  and telnetd. Do *not* use the sliplogin from earlier versions of this
+	  package, either.
+	talkd is flashproof.
+	Much of the code builds without libbsd.a or bsd includes.
+	Massive code cleanup. Almost everything compiles clean with gcc
+	  -Wall now. rusers and rusersd do not; patches to rpcgen to fix
+	  this would be appreciated if anyone feels like it.
+	New maintainer:  David A. Holland, dholland@hcs.harvard.edu
+
+date not known
+	NetKit-B-0.06 released.
+	Have talk be interruptable by Ctrl-Z from John Tombs (haven't 
+	  tested this)
+
+date not known
+	NetKit-B-0.05 released.
+	Fixed talk connection problem for multihomed hosts (Pauline
+	  Middelink) This patch must be activated by editing the Makefile
+	  of "talk" as this is not the correct way to set up a linux
+	  host/solve this problem...
+
+date not known
+	NetKit-B-0.04 released.
+	Changes to talk and talkd from newer NetBSD versions.
+
+date not known
+	NetKit-B-0.03 released.
+
