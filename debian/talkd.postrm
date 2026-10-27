@@ -1,0 +1,24 @@
+#!/bin/sh
+set -e
+
+remove_talk() {
+	update-inetd --remove 'talk[ \t].*[ \t]/usr/sbin/in.talkd'
+	update-inetd --remove 'ntalk[ \t].*[ \t]/usr/sbin/in.ntalkd'
+}
+
+case "$1" in
+abort-install | remove | abort-upgrade | upgrade | failed-upgrade | disappear)
+	;;
+purge)
+	# If netbase is not installed, then we don't need to do the remove.
+	if which update-inetd >/dev/null 2>&1; then
+		remove_talk
+	fi
+	;;
+*)
+	echo "$0: incorrect arguments: $*" >&2
+	exit 1
+	;;
+esac
+
+#DEBHELPER#

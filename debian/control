@@ -1,0 +1,36 @@
+Source: netkit-ntalk
+Section: net
+Priority: optional
+Maintainer: Debian QA Group <packages@qa.debian.org>
+Standards-Version: 4.7.0
+Build-Depends: cmake,
+               debhelper-compat (= 13),
+               libncurses-dev,
+               libwrap0-dev,
+Rules-Requires-Root: no
+Vcs-Browser: https://salsa.debian.org/debian/netkit-ntalk
+Vcs-Git: https://salsa.debian.org/debian/netkit-ntalk.git
+
+Package: talk
+Architecture: any
+Depends: ${misc:Depends},
+         ${shlibs:Depends},
+Replaces: netstd,
+Suggests: talkd,
+Description: Chat with another user
+ Talk is a visual communication program which copies lines from your terminal
+ to that of another user.
+ .
+ In order to talk locally, you will need to install the talkd package.
+
+Package: talkd
+Architecture: any
+Depends: netbase,
+         openbsd-inetd | xinetd,
+         ${misc:Depends},
+         ${shlibs:Depends},
+Replaces: netstd,
+Description: Remote user communication server
+ Talkd is the server that notifies a user that someone else wants to initiate
+ a conversation.  It acts a repository of invitations, responding to requests
+ by clients wishing to rendezvous to hold a conversation.

@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+
+if [ "$1" != upgrade ]; then
+	update-alternatives --remove talk /usr/bin/netkit-ntalk
+fi
+
+#DEBHELPER#

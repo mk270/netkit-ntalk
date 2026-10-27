@@ -1,0 +1,4 @@
+usr/sbin/in.ntalkd                  usr/sbin/in.talkd
+usr/share/man/man8/in.ntalkd.8.gz   usr/share/man/man8/in.talkd.8.gz
+usr/share/man/man8/in.ntalkd.8.gz   usr/share/man/man8/ntalkd.8.gz
+usr/share/man/man8/in.talkd.8.gz    usr/share/man/man8/talkd.8.gz

@@ -1,0 +1,249 @@
+netkit-ntalk (0.17-19) unstable; urgency=medium
+
+  * QA upload.
+
+  * Added d/gbp.conf to describe branch layout.
+  * Updated vcs in d/control to Salsa.
+  * Updated d/gbp.conf to enforce the use of pristine-tar.
+  * Updated Standards-Version from 4.3.0 to 4.7.0.
+  * Use wrap-and-sort -at for debian control files.
+  * Trim trailing whitespace.
+  * Updated from debhelper compat level 10 to 13.
+  * Flag in d/control that build do not need root.
+
+ -- Petter Reinholdtsen <pere@debian.org>  Fri, 29 Nov 2024 16:45:05 +0100
+
+netkit-ntalk (0.17-18) unstable; urgency=medium
+
+  * Orphan package. Set maintainer to QA.
+
+ -- Alberto Gonzalez Iniesta <agi@inittab.org>  Sat, 24 Sep 2022 13:08:42 +0200
+
+netkit-ntalk (0.17-17) unstable; urgency=medium
+
+  *  d/patches/use-cmake-as-buildsystem.patch. Update ncurses reference.
+     (Closes: #971205)
+
+ -- Alberto Gonzalez Iniesta <agi@inittab.org>  Sat, 10 Oct 2020 11:11:20 +0200
+
+netkit-ntalk (0.17-16) unstable; urgency=medium
+
+  [ Christoph Biedl ]
+  * Move build system to cmake. (Closes: #911154)
+  * Mayor cleanup in debian/
+  * Moved to debhelper compat 10
+  * Moved to source format 3.0 (quilt)
+
+  [ Alberto Gonzalez Iniesta ]
+  * Bumped Standards-Version to 4.3.0, no change.
+
+ -- Alberto Gonzalez Iniesta <agi@inittab.org>  Thu, 27 Dec 2018 14:11:22 +0100
+
+netkit-ntalk (0.17-15) unstable; urgency=low
+
+  * debian/control: add ${misc:Depends} to binary packages entries
+  * Add debian/source/format
+  * debian/rules: Add build-arch/build-indep
+  * Bumped Standards-Version to 3.9.3, no change.
+  * debian/copyrigh: Include the license instead of referencing
+    /usr/share/common-licenses/BSD
+  * Add dummy debian/watch
+  * post/pre*. Use 'set -e' instead of '-e' in the shebang.
+  * Add hardening flags
+  * debian/rules: make use of dh_installlogcheck. (Closes: #545025)
+  * debian/control: add xinetd as an alternative to openbsd-inetd
+    (Closes: #618811)
+
+ -- Alberto Gonzalez Iniesta <agi@inittab.org>  Thu, 14 Jun 2012 12:54:26 +0200
+
+netkit-ntalk (0.17-14) unstable; urgency=low
+
+  * Depend only on openbsd-inetd since inetutils-inetd does not
+    support 'user.group' notation, and 'tty' group is required.
+    (Closes: #532749)
+  * Bumped Standards-Version to 3.8.2, no change.
+  * Made the package lintian clean again.
+  * Moved to debhelper compat 5.
+
+ -- Alberto Gonzalez Iniesta <agi@inittab.org>  Tue, 21 Jul 2009 15:35:32 +0200
+
+netkit-ntalk (0.17-13) unstable; urgency=low
+
+  * Ignore missing ../MCONFIG in clean target. (Closes: #436715)
+
+ -- Alberto Gonzalez Iniesta <agi@inittab.org>  Wed, 08 Aug 2007 20:55:00 +0200
+
+netkit-ntalk (0.17-12) unstable; urgency=low
+
+  * Updated Build-Dep on libwrap-dev to libwrap0-dev. (Closes: #436312)
+  * Bumped Standards-Version to 3.7.2.2, no change.
+  * Patched talk/ctl_transact.c to stop using SO_BSDCOMPAT
+    (Closes: #355601)
+  * Fixed postinst printf with echo. Thanks Matej Vela for the patch.
+    (Closes: #359045)
+  * Added logcheck file. Thanks Alexander Gerasiov. (Closes: #301935)
+  * Moved to debhelper compatability 4. Created debian/compat.
+  * Added depends on inet-superserver, since maintainer scripts use
+    update-inetd.
+
+ -- Alberto Gonzalez Iniesta <agi@inittab.org>  Tue, 07 Aug 2007 14:42:44 +0200
+
+netkit-ntalk (0.17-11) unstable; urgency=low
+
+  * New maintainer.
+  * debian/control. Removed full stops from packages descriptions
+    to shut lintian up.
+   * debian/control. Changed 'talk' package description from
+    'Talk to' to 'Chat with' to shut lintian up.
+
+ -- Alberto Gonzalez Iniesta <agi@inittab.org>  Sat, 12 Mar 2005 12:48:58 +0100
+
+netkit-ntalk (0.17-10) unstable; urgency=medium
+
+  * Beautify error message when attempting to run talkd from command-line.
+    - talkd/talkd.c
+    (Closes: #275478)
+  * Use "which" instead of "command -v" in talkd scripts. (Closes: #293051)
+    - debian/talkd.prerm
+    - debian/talkd.postrm
+  * Fix possible DOS vulnerability in talkd, with patch from security team.
+    - talkd/talkd.c:  Don't accept connections on priviledged ports.
+
+ -- Robert Millan <rmh@debian.org>  Wed, 16 Feb 2005 17:59:06 +0100
+
+netkit-ntalk (0.17-9) unstable; urgency=low
+
+  * New maintainer. (Closes: #249707)
+    - control (Maintainer): Set myself.
+
+ -- Robert Millan <rmh@debian.org>  Wed, 19 May 2004 02:10:10 +0200
+
+netkit-ntalk (0.17-8) unstable; urgency=low
+
+  * Fixed update-alternatives check in postinst (closes: #210863).
+
+ -- Herbert Xu <herbert@debian.org>  Mon, 29 Sep 2003 20:14:46 +1000
+
+netkit-ntalk (0.17-7) unstable; urgency=low
+
+  * Reinstate alarm handler after calling wrappers in talkd (closes: #175185).
+
+ -- Herbert Xu <herbert@debian.org>  Sun,  9 Feb 2003 12:16:00 +1100
+
+netkit-ntalk (0.17-6) unstable; urgency=low
+
+  * Added talkd/ntalkd manual entries.
+  * Use in.talkd in synopsis of talkd man page (closes: #173057).
+
+ -- Herbert Xu <herbert@debian.org>  Sun, 22 Dec 2002 16:30:16 +1100
+
+netkit-ntalk (0.17-5) unstable; urgency=low
+
+  * Removed pre-tcpwrappers DNS check (closes: 134257).
+
+ -- Herbert Xu <herbert@debian.org>  Sun, 17 Feb 2002 08:36:34 +1100
+
+netkit-ntalk (0.17-4) unstable; urgency=low
+
+  * Fixed unset variable that caused talkd to be disabled (closes: #104507).
+
+ -- Herbert Xu <herbert@debian.org>  Sat, 14 Jul 2001 09:17:45 +1000
+
+netkit-ntalk (0.17-3) unstable; urgency=high
+
+  * Removed use of [:blank:] character class (closes: #92466).
+
+ -- Herbert Xu <herbert@debian.org>  Mon,  2 Apr 2001 20:51:06 +1000
+
+netkit-ntalk (0.17-2) unstable; urgency=low
+
+  * Replace commented out lines with commented out lines in inetd.conf
+    (closes: #82235).
+  * Fixed compilation problems with glibc 2.2 (closes: #90368).
+
+ -- Herbert Xu <herbert@debian.org>  Tue, 20 Mar 2001 21:39:57 +1100
+
+netkit-ntalk (0.17-1) unstable; urgency=low
+
+  * New upstream release.
+  * Suggest talkd in talk (closes: #75293).
+
+ -- Herbert Xu <herbert@debian.org>  Sun,  5 Nov 2000 21:10:23 +1100
+
+netkit-ntalk (0.16-4) unstable; urgency=low
+
+  * Added build-time dependency on debhelper (closes: #66748).
+
+ -- Herbert Xu <herbert@debian.org>  Mon, 17 Jul 2000 17:18:38 +1000
+
+netkit-ntalk (0.16-3) unstable; urgency=low
+
+  * Do not use M-p and M-q for scrolling up and down, ALT-p and ALT-q still
+    works though (closes: #66497).  Thanks to Alexey Vyskubov.
+
+ -- Herbert Xu <herbert@debian.org>  Tue,  4 Jul 2000 10:52:01 +1000
+
+netkit-ntalk (0.16-2) unstable; urgency=low
+
+  * Created a new option for talkd (-q) that will disable the logging of
+    successful connects.
+
+ -- Herbert Xu <herbert@debian.org>  Wed, 17 May 2000 19:33:18 +1000
+
+netkit-ntalk (0.16-1) unstable; urgency=low
+
+  * New upstream release.
+  * Don't treat 0xfe as an erase char, ytalk should be fixed instead.
+  * Added support for libwrap (closes: #46189).
+  * Install talk as netkit-ntalk and use alternatives for talk
+    (closes: #57968).
+  * Made compliant with policy 3.1.1.
+
+ -- Herbert Xu <herbert@debian.org>  Thu,  4 May 2000 13:04:23 +1000
+
+netkit-ntalk (0.10-6) frozen unstable; urgency=low
+
+  * Recompiled with libncurses5.
+  * Don't call sendto if we don't have a valid address (closes: #57425,
+    #57583).
+
+ -- Herbert Xu <herbert@debian.org>  Tue, 14 Mar 2000 12:52:18 +1100
+
+netkit-ntalk (0.10-5) unstable; urgency=low
+
+  * Applied the FvK patch (fixes #32086).
+  * Updated package maintainer scripts.
+
+ -- Herbert Xu <herbert@debian.org>  Sat, 25 Sep 1999 09:04:23 +1000
+
+netkit-ntalk (0.10-4) frozen unstable; urgency=low
+
+  * Uploaded to slink.
+
+ -- Herbert Xu <herbert@debian.org>  Sun, 15 Nov 1998 15:09:50 +1100
+
+netkit-ntalk (0.10-3) unstable; urgency=low
+
+  * Rebuilt with libncurses4.
+
+ -- Herbert Xu <herbert@debian.org>  Sat, 31 Oct 1998 17:50:42 +1100
+
+netkit-ntalk (0.10-2) unstable; urgency=low
+
+  * Be more liberal to what to remove (fixes #28027).
+  * Applied Sun compatibility patch from Juan-Mariano de Goyeneche
+    <jmseyas@dit.upm.es> (fixes #26641).
+    Hack to make standard talk/talkd compatible with SunOS/Solaris, which use a
+    different protocol.
+    Talk now understands ytalk's erase character (0xFE) and Solaris' ENTER
+    (Solaris uses ^M as `ENTER', making it incompatible with anybody else,
+    including SunOS, which use normal \n).
+
+ -- Herbert Xu <herbert@debian.org>  Sat, 17 Oct 1998 14:39:43 +1000
+
+netkit-ntalk (0.10-1) unstable; urgency=low
+
+  * Initial Release.
+  * Run as nobody.tty instead of root.
+
+ -- Herbert Xu <herbert@debian.org>  Fri, 11 Sep 1998 13:25:27 +1000

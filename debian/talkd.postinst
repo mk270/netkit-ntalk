@@ -1,0 +1,56 @@
+#!/bin/sh
+set -e
+
+enable_talk() {
+	update-inetd --pattern '[ \t]/usr/sbin/in\.talkd' --enable talk
+	update-inetd --pattern '[ \t]/usr/sbin/in\.ntalkd' --enable ntalk
+}
+
+remove_talk() {
+	update-inetd --remove "$talkp"
+	update-inetd --remove "$ntalkp"
+}
+
+talkp='talk[ \t].*[ \t]/usr/sbin/in.talkd'
+ntalkp='ntalk[ \t].*[ \t]/usr/sbin/in.ntalkd'
+
+case "$1" in
+abort-upgrade | abort-deconfigure | abort-remove)
+	enable_talk
+	;;
+configure)
+	if [ -n "$2" ] && dpkg --compare-versions "$2" ge 0.16-1; then
+		enable_talk
+	else
+		talk_entry="talk		dgram	udp	wait	nobody.tty	/usr/sbin/in.talkd	in.talkd"
+		ntalk_entry="ntalk		dgram	udp	wait	nobody.tty	/usr/sbin/in.ntalkd	in.ntalkd"
+		if grep "$talkp" /etc/inetd.conf | grep -q '^#'; then
+			talk_entry=\#$talk_entry
+		fi
+		if grep "$ntalkp" /etc/inetd.conf | grep -q '^#'; then
+			ntalk_entry=\#$ntalk_entry
+		fi
+		remove_talk
+		if
+			[ -n "${talk_entry###*}" ] &&
+			grep -q ^talk /etc/inetd.conf
+		then
+			talk_entry=\#$talk_entry
+		fi
+		if
+			[ -n "${ntalk_entry###*}" ] &&
+			grep -q ^ntalk /etc/inetd.conf
+		then
+			ntalk_entry=\#$ntalk_entry
+		fi
+		update-inetd --group BSD --add "$talk_entry"
+		update-inetd --group BSD --add "$ntalk_entry"
+	fi
+	;;
+*)
+	echo "$0: incorrect arguments: $*" >&2
+	exit 1
+	;;
+esac
+
+#DEBHELPER#

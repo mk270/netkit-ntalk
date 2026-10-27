@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+
+if which update-inetd >/dev/null 2>&1; then
+	update-inetd --pattern '[ \t]/usr/sbin/in\.talkd' --disable talk
+	update-inetd --pattern '[ \t]/usr/sbin/in\.ntalkd' --disable ntalk
+fi
+
+#DEBHELPER#
