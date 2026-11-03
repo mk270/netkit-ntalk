@@ -123,7 +123,9 @@ typedef struct {
  * Operational parameters.
  * RING_WAIT should be 10's of seconds less than MAX_LIFE
  */
+#ifndef MAX_LIFE		/* tests build with a short lifetime */
 #define MAX_LIFE	60	/* max time daemon saves invitations */
+#endif
 #define RING_WAIT	30	/* time to wait before resending invitation */
 
 #endif /* !_PROTOCOLS_TALKD_H */
