@@ -18,6 +18,7 @@ while [ x$1 != x ]; do case $1 in
 Usage: configure [options]
     --help                Show this message
     --with-debug          Enable debugging
+    --without-libwrap     Don't use libwrap in talkd [used if found]
     --prefix=path         Prefix for location of files [/usr]
     --exec-prefix=path    Location for arch-depedent files [prefix]
     --installroot=root    Top of filesystem tree to install in [/]
@@ -33,6 +34,7 @@ EOF
 	--subdir) . ../configure.defs;;
 
 	--with-debug|--debug) DEBUG=1;;
+	--without-libwrap) NOWRAP=1;;
 	--prefix=*) PREFIX=`echo $1 | sed 's/^[^=]*=//'` ;;
 	--exec-prefix=*) EXECPREFIX=`echo $1 | sed 's/^[^=]*=//'` ;;
 	--installroot=*) INSTALLROOT=`echo $1 | sed 's/^[^=]*=//'` ;;
@@ -260,6 +262,33 @@ rm -f __conftest*
 
 ##################################################
 
+WRAPDEFS=
+LIBWRAP=
+if [ x$NOWRAP = x ]; then
+    echo -n 'Checking for libwrap... '
+    cat <<EOF >__conftest.c
+#include <stdio.h>
+#include <tcpd.h>
+int allow_severity, deny_severity;
+int main() {
+    struct request_info r;
+    request_init(&r, 0);
+    return hosts_access(&r);
+}
+
+EOF
+    if (
+          $CC $CFLAGS  __conftest.c -lwrap -o __conftest || exit 1
+       ) >/dev/null 2>&1; then
+        echo 'yes'
+        WRAPDEFS=-DHAVE_LIBWRAP
+        LIBWRAP=-lwrap
+    else
+        echo 'no (talkd will not filter clients by host)'
+    fi
+    rm -f __conftest*
+fi
+
 echo -n 'Checking for snprintf declaration... '
 cat <<EOF >__conftest.c
 #include <stdio.h>
@@ -366,6 +395,8 @@ echo 'Generating MCONFIG...'
     echo "CFLAGS=$CFLAGS" | sed 's/= */=/'
     echo "LDFLAGS=$LDFLAGS" | sed 's/= */=/'
     echo "LIBS=$LIBS" | sed 's/= */=/'
+    echo "WRAPDEFS=$WRAPDEFS"
+    echo "LIBWRAP=$LIBWRAP"
 
     echo "LIBCURSES=$LIBCURSES"
 ) > MCONFIG

@@ -10,10 +10,17 @@ add_executable(
     print.c
     repairs.c
 )
-target_link_libraries(
-    in.ntalkd
-    wrap
-)
+if(USE_LIBWRAP)
+    find_library(WRAP wrap)
+    find_path(TCPD_INCLUDE_DIR tcpd.h)
+    if(NOT WRAP OR NOT TCPD_INCLUDE_DIR)
+        message(FATAL_ERROR
+            "libwrap not found: install libwrap0-dev, "
+            "or configure with -DUSE_LIBWRAP=OFF")
+    endif()
+    target_compile_definitions(in.ntalkd PRIVATE HAVE_LIBWRAP)
+    target_link_libraries(in.ntalkd ${WRAP})
+endif()
 install(
     TARGETS in.ntalkd
     DESTINATION ${SBIN_DIR}

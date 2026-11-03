@@ -3,12 +3,12 @@ all: talkd
 include ../MCONFIG
 include ../MRULES
 
-CFLAGS += -I../include
+CFLAGS += -I../include $(WRAPDEFS)
 
 OBJS = talkd.o announce.o process.o table.o print.o repairs.o
 
 talkd: $(OBJS) 
-	$(CC) $(LDFLAGS) $^ $(LIBS) -o $@
+	$(CC) $(LDFLAGS) $^ $(LIBS) $(LIBWRAP) -o $@
 
 $(OBJS): proto.h ../include/prot_talkd.h ../version.h
 

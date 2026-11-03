@@ -9,5 +9,8 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_GNU_SOURCE")
 
 find_library(NCURSES ncurses REQUIRED)
 
+option(USE_LIBWRAP
+       "talkd: filter clients with libwrap (hosts.allow/hosts.deny)" ON)
+
 add_subdirectory(talk)
 add_subdirectory(talkd)

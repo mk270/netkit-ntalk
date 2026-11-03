@@ -58,12 +58,14 @@ char talkd_rcsid[] =
 #include <time.h>
 #include <errno.h>
 #include <unistd.h>
-/*#include <stdio.h>*/
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <netdb.h>
 #include <paths.h>
+#ifdef HAVE_LIBWRAP
 #include <tcpd.h>
+#endif
 #include "prot_talkd.h"
 #include "proto.h"
 
@@ -77,7 +79,7 @@ char talkd_rcsid[] =
 char ourhostname[MAXHOSTNAMELEN];
 
 static time_t lastmsgtime;
-#ifndef __USE_GNU
+#if defined(HAVE_LIBWRAP) && !defined(__USE_GNU)
 static char *program_invocation_short_name;
 #endif
 static int quiet;
@@ -119,6 +121,42 @@ is_local_address(u_int32_t addr)
 	close(sock);
 	return ret==0;
 }
+
+#ifndef HAVE_LIBWRAP
+static int
+same_ip(const struct sockaddr *a, const struct sockaddr_in *b)
+{
+	const struct sockaddr_in *in = (const struct sockaddr_in *)a;
+
+	return in->sin_addr.s_addr == b->sin_addr.s_addr;
+}
+
+/*
+ * Name of the sending host, for the announcement banner.  A name is only
+ * believed if it resolves back to the sender's address; otherwise the
+ * numeric address is used.
+ */
+static void
+peer_name(const struct sockaddr_in *sn, char *buf, size_t size)
+{
+	struct addrinfo hints, *res, *ai;
+	char name[NI_MAXHOST];
+	int ok = 0;
+
+	if (getnameinfo((const struct sockaddr *)sn, sizeof(*sn),
+			name, sizeof(name), NULL, 0, NI_NAMEREQD) == 0) {
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_family = AF_INET;
+		hints.ai_socktype = SOCK_DGRAM;
+		if (getaddrinfo(name, NULL, &hints, &res) == 0) {
+			for (ai = res; ai != NULL && !ok; ai = ai->ai_next)
+				ok = same_ip(ai->ai_addr, sn);
+			freeaddrinfo(res);
+		}
+	}
+	snprintf(buf, size, "%s", ok ? name : inet_ntoa(sn->sin_addr));
+}
+#endif
 
 static void
 send_packet(CTL_RESPONSE *response, struct sockaddr_in *sn, int quirk)
@@ -170,12 +208,16 @@ do_one_packet(void)
 	const char *theirip;
 
 	struct sockaddr_in sn;
+#ifdef HAVE_LIBWRAP
 	struct sockaddr_in server_sin;
+#endif
 	int cc;
 	socklen_t addrlen;
  	int theirport;
 
+#ifdef HAVE_LIBWRAP
 	struct request_info request;
+#endif
 
 	signal(SIGALRM, timeout);
 	alarm(TIMEOUT);
@@ -220,6 +262,7 @@ do_one_packet(void)
 	theirip = inet_ntoa(sn.sin_addr);
 	mp = (CTL_MSG *)inbuf;
 
+#ifdef HAVE_LIBWRAP
 	addrlen = sizeof(server_sin);
 	if (getsockname(0, (struct sockaddr *)&server_sin, &addrlen)<0) {
 		syslog(LOG_WARNING, "getsockname: %s", strerror(errno));
@@ -245,6 +288,14 @@ do_one_packet(void)
 	alarm(TIMEOUT);
 	strncpy(theirhost, eval_hostinfo(request.client), sizeof(theirhost));
 	theirhost[sizeof(theirhost)-1] = 0;
+#else
+	peer_name(&sn, theirhost, sizeof(theirhost));
+	signal(SIGALRM, timeout);
+	alarm(TIMEOUT);
+	if (!quiet) {
+		syslog(LOG_INFO, "connect from %s (%s)", theirhost, theirip);
+	}
+#endif
 
 	/*
 	 * Try to straighten out bad packets.
@@ -330,7 +381,7 @@ main(int argc, char *argv[])
 	socklen_t sz = sizeof(sn);
 	int do_debug=0, do_badpackets=0, ch;
 
-#ifndef __USE_GNU
+#if defined(HAVE_LIBWRAP) && !defined(__USE_GNU)
 	program_invocation_short_name = argv[0];
 	if (argv[0][0] == '/') {
 		program_invocation_short_name = strrchr(argv[0], '/') + 1;
