@@ -18,7 +18,7 @@ rc=0
 ${CC:-cc} -g -O0 -Wall -fsanitize=address,undefined \
     -fno-sanitize-recover=undefined $defs -I"$here" -I"$top/include" \
     -o "$out/talkd-asan" $src
-python3 -I "$here/probe.py" "$out/talkd-asan" expire || rc=1
+python3 -I "$here/probe.py" "$out/talkd-asan" expire cap || rc=1
 
 if command -v clang >/dev/null; then
     clang -g -O0 -fsanitize=memory -fno-omit-frame-pointer $defs \

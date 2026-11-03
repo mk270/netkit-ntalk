@@ -15,7 +15,7 @@ void debug(const char *fmt, ...);
 void set_debug(int logging, int badpackets);
 
 /* table.c */
-void insert_table(CTL_MSG *request, CTL_RESPONSE *response);
+int insert_table(CTL_MSG *request, CTL_RESPONSE *response);
 CTL_MSG *find_request(CTL_MSG *request);
 CTL_MSG *find_match(CTL_MSG *request);
 

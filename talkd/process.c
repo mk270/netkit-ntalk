@@ -172,7 +172,10 @@ do_announce(CTL_MSG *mp, CTL_RESPONSE *rp, const char *fromhost)
 	}
 	ptr = find_request(mp);
 	if (ptr == NULL) {
-		insert_table(mp, rp);
+		if (insert_table(mp, rp) < 0) {
+			rp->answer = FAILED;
+			return;
+		}
 		rp->answer = announce(mp, fromhost);
 		return;
 	}
@@ -237,7 +240,7 @@ process_request(CTL_MSG *mp, CTL_RESPONSE *rp, const char *fromhost)
 			rp->id_num = htonl(ptr->id_num);
 			rp->answer = SUCCESS;
 		} 
-		else insert_table(mp, rp);
+		else if (insert_table(mp, rp) < 0) rp->answer = FAILED;
 		break;
 	  case LOOK_UP:
 		ptr = find_match(mp);

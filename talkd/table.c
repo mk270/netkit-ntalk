@@ -58,6 +58,10 @@ char table_rcsid[] =
 #include "prot_talkd.h"
 #include "proto.h"
 
+#ifndef MAX_TABLE_ENTRIES
+#define MAX_TABLE_ENTRIES 1024	/* bound memory use; entries live MAX_LIFE */
+#endif
+
 #define MAX_ID 16000	/* << 2^15 so I don't have sign troubles */
 
 typedef struct table_entry {
@@ -68,6 +72,7 @@ typedef struct table_entry {
 } TABLE_ENTRY;
 
 static TABLE_ENTRY *table = NULL;
+static int table_count = 0;
 
 /*
  * Generate a unique non-zero sequence number
@@ -101,6 +106,7 @@ deleteit(TABLE_ENTRY *ptr)
 		ptr->next->last = ptr->last;
 	}
 	free(ptr);
+	table_count--;
 }
 
 /*
@@ -175,10 +181,23 @@ find_request(CTL_MSG *request)
 	return NULL;
 }
 
-void
+/*
+ * Returns 0 on success, -1 if the table is full.
+ */
+int
 insert_table(CTL_MSG *request, CTL_RESPONSE *response)
 {
+	static int warned;
 	TABLE_ENTRY *ptr;
+
+	if (table_count >= MAX_TABLE_ENTRIES) {
+		if (!warned) {
+			syslog(LOG_WARNING, "invitation table full");
+			warned = 1;
+		}
+		return -1;
+	}
+	warned = 0;
 
 	request->id_num = new_id();
 	response->id_num = htonl(request->id_num);
@@ -198,6 +217,8 @@ insert_table(CTL_MSG *request, CTL_RESPONSE *response)
 	}
 	ptr->last = NULL;
 	table = ptr;
+	table_count++;
+	return 0;
 }
 
 /*
