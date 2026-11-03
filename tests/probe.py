@@ -25,13 +25,13 @@ def ctl(type_, l_name, r_name, tty=b"", id_num=0, pid=1, port=40000):
 
 
 class Daemon:
-    def __init__(self, path):
+    def __init__(self, path, flags=("-q",)):
         self.srv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.srv.bind(("127.0.0.1", 0))
         self.port = self.srv.getsockname()[1]
         env = dict(os.environ, ASAN_OPTIONS="detect_leaks=0")
         self.proc = subprocess.Popen(
-            [path, "-q"], stdin=self.srv.fileno(),
+            [path, *flags], stdin=self.srv.fileno(),
             stdout=self.srv.fileno(), stderr=subprocess.PIPE, env=env,
             pass_fds=[self.srv.fileno()])
         self.cli = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -91,6 +91,14 @@ def reply_clean(path):
         assert len(r) == 24, len(r)
         assert r[3] == 0 and r[8:] == bytes(16), "stale bytes: %r" % r
         assert r[2] in (SUCCESS, 1), "bad answer %d" % r[2]
+
+
+def debug_types(path):
+    """-d logging must cope with an out-of-range request type."""
+    d = Daemon(path, ("-q", "-d"))
+    for t in (4, 99, 255):
+        d.ask(ctl(t, b"alice", b"bob"))
+        assert d.alive(), "type %d: %s" % (t, d.stderr()[:2000])
 
 
 def cap(path):

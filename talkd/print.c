@@ -111,7 +111,7 @@ static const char *
 print_type(int type)
 {
 	static char rv[80];
-	if (type > NTYPES) {
+	if (type >= NTYPES) {
 		snprintf(rv, sizeof(rv), "type %d", type);
 		return rv;
 	} 
@@ -122,7 +122,7 @@ static const char *
 print_answer(int answer)
 {
 	static char rv[80];
-	if (answer > NANSWERS) {
+	if (answer >= NANSWERS) {
 		snprintf(rv, sizeof(rv), "answer %d", answer);
 		return rv;
 	} 
