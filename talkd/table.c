@@ -110,9 +110,11 @@ static void
 expire(void)
 {
 	time_t current_time = time(NULL);
-	TABLE_ENTRY *ptr;
+	TABLE_ENTRY *ptr, *next;
 
-	for (ptr = table; ptr != NULL; ptr = ptr->next) {
+	for (ptr = table; ptr != NULL; ptr = next) {
+		/* deleteit() frees ptr, so fetch the successor first */
+		next = ptr->next;
 		if ((current_time - ptr->time) > MAX_LIFE) {
 			/* the entry is too old */
 			print_request("deleting expired entry",
