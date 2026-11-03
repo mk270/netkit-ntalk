@@ -114,12 +114,13 @@ check_tty_perms(const char *tty, time_t *atime)
  * Search utmp for the local user
  */
 static int
-find_user(const char *name, char *tty)
+find_user(const char *name, char *tty, size_t ttysize)
 {
 	struct utmp *uptr;
+	char line[sizeof(uptr->ut_line) + 1];
 	int found=0, ok=0, ret;
 	time_t best_time = 0, this_time;
-	char besttty[PATH_MAX];
+	char besttty[sizeof(line)];
 
 	*besttty = 0;
 	setutent();
@@ -132,12 +133,19 @@ find_user(const char *name, char *tty)
 			/* wrong user */
 			continue;
 		}
-		if (*tty && !strcmp(tty, uptr->ut_line)) {
+		/* ut_line need not be NUL-terminated; ttysize bounds r_tty */
+		memcpy(line, uptr->ut_line, sizeof(uptr->ut_line));
+		line[sizeof(uptr->ut_line)] = 0;
+		if (strlen(line) >= ttysize) {
+			/* could never be named in a request, so skip it */
+			continue;
+		}
+		if (*tty && !strcmp(tty, line)) {
 			/* asked for a tty, found it */
 			endutent();
 			return SUCCESS;
 		}
-		ret = check_tty_perms(uptr->ut_line, &this_time);
+		ret = check_tty_perms(line, &this_time);
 		if (ret != SUCCESS) {
 			found = 1; /* but don't set ok */
 			continue;
@@ -145,11 +153,11 @@ find_user(const char *name, char *tty)
 		found = ok = 1;
 		if (this_time > best_time) {
 			best_time = this_time;
-			strcpy(besttty, uptr->ut_line);
+			strcpy(besttty, line);
 		}
 	}
 	endutent();
-	strcpy(tty, besttty);
+	snprintf(tty, ttysize, "%s", besttty);
 	return !found ? NOT_HERE : (!ok ? PERMISSION_DENIED : SUCCESS);
 }
 
@@ -165,7 +173,7 @@ do_announce(CTL_MSG *mp, CTL_RESPONSE *rp, const char *fromhost)
 	 * Clobbers mp->r_tty, replacing it with the tty to page them on.
 	 * (If mp->r_tty is not empty, should only return that tty, or fail.)
 	 */
-	result = find_user(mp->r_name, mp->r_tty);
+	result = find_user(mp->r_name, mp->r_tty, sizeof(mp->r_tty));
 	if (result != SUCCESS) {
 		rp->answer = result;
 		return;
