@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Drive a talkd binary over loopback UDP.
 
-usage: probe.py TALKD SCENARIO...   (scenarios: expire, cap)
+usage: probe.py TALKD SCENARIO...   (scenarios: expire, reply_clean, cap)
 
 talkd expects to be started by inetd: UDP socket on fds 0 and 1.
 """
@@ -48,6 +48,14 @@ class Daemon:
         _, type_, answer, _, id_num = struct.unpack("!BBBBI", data[:8])
         return type_, answer, id_num
 
+    def ask_raw(self, pkt):
+        self.cli.sendto(pkt, ("127.0.0.1", self.port))
+        try:
+            return self.cli.recvfrom(256)[0]
+        except socket.timeout:
+            raise AssertionError("no reply; daemon said: "
+                                 + self.stderr()[:2000])
+
     def alive(self):
         time.sleep(0.2)
         return self.proc.poll() is None
@@ -67,6 +75,22 @@ def expire(path):
     assert r is not None and d.alive(), d.stderr()[:2000]
     # it expired, so the lookup must now fail with NOT_HERE
     assert r[1] == 1, "expired invitation still found: %r" % (r,)
+
+
+def reply_clean(path):
+    """Replies must not carry stale stack bytes in pad/addr."""
+    d = Daemon(path)
+    d.ask(ctl(LEAVE_INVITE, b"alice", b"bob"))
+    # a successful lookup leaves a real address in the reply buffer ...
+    d.ask(ctl(LOOK_UP, b"bob", b"alice"))
+    # ... which must not show up in replies that carry no address
+    for pkt in (ctl(LEAVE_INVITE, b"carol", b"dave", pid=2),
+                ctl(LOOK_UP, b"nobody", b"nobody"),
+                ctl(DELETE, b"x", b"y", id_num=999)):
+        r = d.ask_raw(pkt)
+        assert len(r) == 24, len(r)
+        assert r[3] == 0 and r[8:] == bytes(16), "stale bytes: %r" % r
+        assert r[2] in (SUCCESS, 1), "bad answer %d" % r[2]
 
 
 def cap(path):

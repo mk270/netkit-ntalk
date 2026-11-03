@@ -207,6 +207,9 @@ process_request(CTL_MSG *mp, CTL_RESPONSE *rp, const char *fromhost)
 {
 	CTL_MSG *ptr;
 
+	/* Every byte of the reply goes on the wire, so start from zeros */
+	memset(rp, 0, sizeof(*rp));
+
 	/* Ensure null-termination */
 	mp->l_name[sizeof(mp->l_name)-1] = 0;
 	mp->r_name[sizeof(mp->r_name)-1] = 0;
