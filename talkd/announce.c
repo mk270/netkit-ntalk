@@ -47,6 +47,7 @@ char ann_rcsid[] =
 #include <unistd.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <pwd.h>
 #include <string.h>
 #include <paths.h>
 #include <time.h>
@@ -158,19 +159,32 @@ announce_proc(CTL_MSG *request, const char *remote_machine)
 	char full_tty[32];
 	int fd;
 	struct stat stbuf;
+	struct passwd *pw;
 
 	snprintf(full_tty, sizeof(full_tty), "%s/%s", _PATH_DEV, 
 		 request->r_tty);
 	if (access(full_tty, F_OK) != 0)
 		return FAILED;
-	fd = open(full_tty, O_WRONLY|O_NOCTTY);
+	/* O_NONBLOCK: don't hang opening a modem line or a FIFO */
+	fd = open(full_tty, O_WRONLY|O_NOCTTY|O_NONBLOCK);
 	if (fd<0) {
 		return (PERMISSION_DENIED);
 	}
 	if (fstat(fd, &stbuf) < 0) {
+		close(fd);
 		return (PERMISSION_DENIED);
 	}
 	if ((stbuf.st_mode&020) == 0) {
+		close(fd);
+		return (PERMISSION_DENIED);
+	}
+	/*
+	 * We write as root, so make sure this really is a terminal and
+	 * that it belongs to the person being called.
+	 */
+	pw = getpwnam(request->r_name);
+	if (!isatty(fd) || pw == NULL || pw->pw_uid != stbuf.st_uid) {
+		close(fd);
 		return (PERMISSION_DENIED);
 	}
 	print_mesg(fd, request, remote_machine);
