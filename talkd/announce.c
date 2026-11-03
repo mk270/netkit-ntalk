@@ -146,7 +146,9 @@ print_mesg(int fd, CTL_MSG *request, const char *remote_machine)
 		*(bptr++) = '\n';
 	}
 	*bptr = 0;
-	write(fd, big_buf, strlen(big_buf));
+	/* best effort: if the tty is gone there is nobody to tell */
+	if (write(fd, big_buf, strlen(big_buf)) < 0)
+		return;
 }
 
 /*

@@ -154,7 +154,10 @@ peer_name(const struct sockaddr_in *sn, char *buf, size_t size)
 			freeaddrinfo(res);
 		}
 	}
-	snprintf(buf, size, "%s", ok ? name : inet_ntoa(sn->sin_addr));
+	if (ok && strlen(name) < size)
+		strcpy(buf, name);
+	else
+		snprintf(buf, size, "%s", inet_ntoa(sn->sin_addr));
 }
 #endif
 

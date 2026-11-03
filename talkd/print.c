@@ -107,6 +107,15 @@ set_debug(int l, int b)
 	}
 }
 
+/* Debug logging is best effort; there is nowhere to report a failure. */
+static void
+logwrite(int fd, const char *buf, size_t len)
+{
+	ssize_t n = write(fd, buf, len);
+
+	(void)n;
+}
+
 static const char *
 print_type(int type)
 {
@@ -148,7 +157,7 @@ print_request(const char *cp, const CTL_MSG *mp)
 	snprintf(buf, sizeof(buf), 
 		 "%s: %s: id %u, l_user %s, r_user %s, r_tty %s\n",
 		 cp, tp, mp->id_num, lu, ru, tt);
-	write(logfd, buf, strlen(buf));
+	logwrite(logfd, buf, strlen(buf));
 }
 
 void
@@ -164,7 +173,7 @@ print_response(const char *cp, const CTL_RESPONSE *rp)
 	snprintf(buf, sizeof(buf), 
 		 "%s: %s <-- %s, id %d\n",
 		 cp, tp, ap, ntohl(rp->id_num));
-	write(logfd, buf, strlen(buf));
+	logwrite(logfd, buf, strlen(buf));
 }
 
 void
@@ -177,7 +186,7 @@ debug(const char *format, ...)
 	va_start(ap, format);
 	vsnprintf(buf, sizeof(buf), format, ap);
 	va_end(ap);
-	write(logfd, buf, strlen(buf));
+	logwrite(logfd, buf, strlen(buf));
 }
 
 void
@@ -188,11 +197,11 @@ print_broken_packet(const char *pack, size_t len, struct sockaddr_in *from)
 	if (!badpackets) return;
 	snprintf(buf, sizeof(buf), "From: %s [%u]", 
 		 inet_ntoa(from->sin_addr), from->sin_addr.s_addr);
-	write(packfd, buf, strlen(buf));
+	logwrite(packfd, buf, strlen(buf));
 	for (i=0; i<len; i++) {
-	    if (i%24 == 0) write(packfd, "\n    ", 5);
+	    if (i%24 == 0) logwrite(packfd, "\n    ", 5);
 	    snprintf(tmp, sizeof(tmp), "%02x ", (unsigned char)pack[i]);
-	    write(packfd, tmp, strlen(tmp));
+	    logwrite(packfd, tmp, strlen(tmp));
 	}
-	write(packfd, "\n", 1);
+	logwrite(packfd, "\n", 1);
 }

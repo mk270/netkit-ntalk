@@ -62,7 +62,6 @@ open_ctl(void)
 {
 	struct sockaddr_in loc, rem;
 	socklen_t length;
-	int on=1;
 
 	to_local_talkd = socket(AF_INET, SOCK_DGRAM, 0);
 	to_remote_talkd = socket(AF_INET, SOCK_DGRAM, 0);
